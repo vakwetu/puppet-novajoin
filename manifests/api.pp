@@ -55,7 +55,7 @@
 class novajoin::api (
   $enabled               = true,
   $ensure_package        = 'present',
-  $hostname              = ${::fqdn},
+  $hostname              = "${::fqdn}",
   $ipa_password          = undef,
   $ipa_password_file     = undef,
   $ipa_principal         = undef,
@@ -85,7 +85,7 @@ class novajoin::api (
 
   if $nova_password == undef {
     fail('nova_password is required to be set.')
-  } 
+  }
 
   $install_opts = "${install_opts} --user ${nova_user} --nova-password ${nova_password}"
 
@@ -125,10 +125,11 @@ class novajoin::api (
   }
 
   exec { 'novajoin-install-script':
-    command =>  "novajoin-install $install_opts",
+    command  => "novajoin-install ${install_opts}",
     requires => Package['python-novajoin'],
   }
 
   Package['python-novajoin'] ~> Service['novajoin-api']
   Exec['novajoin-install-script'] ~> Service['novajoin-api']
-  
+
+}
