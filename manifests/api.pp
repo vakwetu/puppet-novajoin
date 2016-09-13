@@ -67,39 +67,42 @@ class novajoin::api (
   $nova_user             = 'nova',
 ) inherits novajoin::params {
 
+  require ::ipa::client
+
   if $ipa_principal == undef {
     fail('ipa_principal is required to be set')
-  }
-
-  $install_opts = "--hostname ${hostname} --principal ${ipa_principal}"
-  
-  if $ipa_password_file != undef {
-    $install_opts = "${install_opts} --password_file ${ipa_password_file}"
-  }
-  elsif $ipa_password != undef {
-    $install_opts = "${install_opts} --password ${ipa_password}"
-  }
-  else {
-    fail('either ipa_password or ipa_password_file must be set')
   }
 
   if $nova_password == undef {
     fail('nova_password is required to be set.')
   }
 
-  $install_opts = "${install_opts} --user ${nova_user} --nova-password ${nova_password}"
+  $opt1 = "--hostname ${hostname} --principal ${ipa_principal} --user ${nova_user} --nova-password ${nova_password}"
+  
+  if $ipa_password_file != undef {
+    $opt2 = "--password_file ${ipa_password_file}"
+  }
+  elsif $ipa_password != undef {
+    $opt2 = "--password ${ipa_password}"
+  }
+  else {
+    fail('either ipa_password or ipa_password_file must be set')
+  }
+
 
   if $keystone_auth_url != undef {
-    $install_opts = "${install_opts} --keystone_auth_url ${keystone_auth_url}"
+    $opt3 = "--keystone_auth_url ${keystone_auth_url}"
   }
 
   if $keystone_auth_uri != undef {
-    $install_opts = "${install_opts} --keystone_auth_uri ${keystone_auth_uri}"
+    $opt4 = "--keystone_auth_uri ${keystone_auth_uri}"
   }
 
   if $keystone_identity_uri != undef {
-    $install_opts = "${install_opts} --keystone_identity ${keystone_identity_uri}"
+    $opt5 = " --keystone_identity ${keystone_identity_uri}"
   }
+
+  $install_opts = "${opt1} ${opt2} ${opt3} ${opt4} ${opt5}"
 
   package { 'python-novajoin':
     ensure => $ensure_package,
@@ -125,11 +128,10 @@ class novajoin::api (
   }
 
   exec { 'novajoin-install-script':
-    command  => "novajoin-install ${install_opts}",
-    requires => Package['python-novajoin'],
+    command  => "/usr/sbin/novajoin-install ${install_opts}",
+    require  => Package['python-novajoin']
   }
 
-  Package['python-novajoin'] ~> Service['novajoin-api']
-  Exec['novajoin-install-script'] ~> Service['novajoin-api']
-
+  Package['python-novajoin'] -> Exec['novajoin-install-script'] ~> Service['novajoin-api']
+  Exec['novajoin-install-script'] ~> Service['nova-api']
 }
