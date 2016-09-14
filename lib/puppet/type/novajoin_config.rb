@@ -3,7 +3,7 @@ Puppet::Type.newtype(:novajoin_config) do
   ensurable
 
   newparam(:name, :namevar => true) do
-    desc 'Section/setting name to manage from novajoin.conf'
+    desc 'Section/setting name to manage from join.conf'
     newvalues(/\S+\/\S+/)
   end
 
