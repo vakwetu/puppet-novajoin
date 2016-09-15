@@ -90,7 +90,7 @@ class novajoin::api (
     fail('nova_password is required to be set.')
   }
 
-  $opt1 = "--hostname ${hostname} --principal ${ipa_principal} --user ${nova_user} --nova-password ${nova_password}"
+  $opt1 = "--hostname ${hostname} --principal ${ipa_principal} --user ${nova_user}"
   
   if $ipa_password_file != undef {
     $opt2 = "--password_file ${ipa_password_file}"
@@ -113,7 +113,7 @@ class novajoin::api (
   file { '/etc/join/join.conf':
     ensure => 'present',
     source => '/usr/share/novajoin/join.conf.template',
-  )
+  }
 
   file { '/etc/nova/cloud-config.json':
     ensure => 'present',
@@ -140,13 +140,22 @@ class novajoin::api (
     }
   }
 
-  service { 'novajoin-api':
+  service { 'novajoin-server':
     ensure     => $service_ensure,
     name       => $::novajoin::params::service_name,
     enable     => $enabled,
     hasstatus  => true,
     hasrestart => true,
-    tag        => 'novajoin-service',
+    tag        => 'novajoin-server',
+  }
+
+  service { 'novajoin-notify':
+    ensure     => $service_ensure,
+    name       => $::novajoin::params::notify_service_name,
+    enable     => $enabled,
+    hasstatus  => true,
+    hasrestart => true,
+    tag        => 'novajoin-notify',
   }
 
   # set up whatever is needed in ipa server
@@ -158,6 +167,8 @@ class novajoin::api (
   Package['python-novajoin'] -> File['/etc/join/join.conf']
   Package['python-novajoin'] -> File['/etc/nova/cloud-config.json'] ~> Service['nova-api']
   File['/etc/join/join.conf'] -> Novajoin_config<||>  ~> Service['nova-api']
-  Package['python-novajoin'] -> Exec['novajoin-install-script'] ~> Service['novajoin-api']
+  Package['python-novajoin'] -> Exec['novajoin-install-script']
+  Exec['novajoin-install-script'] ~> Service['novajoin-server']
+  Exec['novajoin-install-script'] ~> Service['novajoin-notify']
   Exec['novajoin-install-script'] ~> Service['nova-api']
 }

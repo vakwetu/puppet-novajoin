@@ -5,8 +5,9 @@ class novajoin::params {
 
   case $::osfamily {
     'RedHat': {
-      $package_name = 'python-novajoin'
-      $service_name = 'novajoin'
+      $package_name        = 'python-novajoin'
+      $service_name        = 'novajoin-server'
+      $notify_service_name = 'novajoin-notify'
     }
     'Debian': {
       fail("Unsupported osfamily: ${::osfamily} operatingsystem")
