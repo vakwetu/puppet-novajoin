@@ -12,10 +12,6 @@
 #   (optional) The state of novajoin packages.
 #   Defaults to 'present'
 #
-# [*hostname*]
-#   (optional) The machine's fully qualified host name.
-#   Default to '${::fqdn}'.
-#
 # [*ipa_domain*]
 #   (required) IPA domain
 #
@@ -34,16 +30,8 @@
 # [*ipa_server*]
 #   (required) IPA server hostname
 #
-# [*keystone_auth_uri*]
-#   (optional) auth_uri for keystone instance.
-#   Defaults to undef
-#
 # [*keystone_auth_url*]
 #   (optional) auth_url for the keystone instance.
-#   Defaults to undef
-#
-# [*keystone_identity_uri*]
-#   (optional) identity_uri for the keystone instance.
 #   Defaults to undef
 #
 # [*manage_service*]
@@ -65,15 +53,12 @@
 class novajoin::api (
   $enabled               = true,
   $ensure_package        = 'present',
-  $hostname              = "${::fqdn}",
   $ipa_domain            = undef,
   $ipa_password          = undef,
   $ipa_password_file     = undef,
   $ipa_principal         = undef,
   $ipa_server            = undef,
-  $keystone_auth_uri     = undef,
   $keystone_auth_url     = undef,
-  $keystone_identity_uri = undef,
   $manage_service        = true,
   $nova_password         = undef,
   $nova_user             = 'nova',
@@ -90,7 +75,7 @@ class novajoin::api (
     fail('nova_password is required to be set.')
   }
 
-  $opt1 = "--hostname ${hostname} --principal ${ipa_principal} --user ${nova_user}"
+  $opt1 = "--principal ${ipa_principal} --user ${nova_user}"
   
   if $ipa_password_file != undef {
     $opt2 = "--password_file ${ipa_password_file}"
@@ -125,13 +110,11 @@ class novajoin::api (
     'DEFAULT/domain':                    value => "${ipa_domain}";
     'DEFAULT/service_name':              value => "HTTP@${ipa_server}";
     'DEFAULT/transport_url':             value => "${transport_url}";
-    'keystone_authtoken/auth_uri':       value => "${keystone_auth_uri}";
-    'keystone_authtoken/admin_password': value => "${nova_password}";
-    'keystone_authtoken/identity_uri':   value => "${keystone_identity_uri}";
     'service_credentials/auth_url':      value => "${keystone_auth_url}";
     'service_credentials/password':      value => "${nova_password}";
+    'service_credentials/username':      value => "${nova_user}";
   }
-  
+ 
   if $manage_service {
     if $enabled {
       $service_ensure = 'running'
@@ -160,7 +143,7 @@ class novajoin::api (
 
   # set up whatever is needed in ipa server
   exec { 'novajoin-install-script':
-    command  => "/usr/sbin/novajoin-install-ipa ${install_opts}",
+    command  => "/usr/libexec/novajoin-ipa-setup ${install_opts}",
     require  => Package['python-novajoin']
   }
 
