@@ -8,6 +8,10 @@
 #   (optional) Whether to enable services.
 #   Defaults to true.
 #
+# [*enable_ipa_client_install*]
+#   (optional) whether to perform ipa_client_install
+#   Defaults to true.
+#
 # [*ensure_package*]
 #   (optional) The state of novajoin packages.
 #   Defaults to 'present'
@@ -51,21 +55,24 @@
 #   Defaults to undef
 #
 class novajoin::api (
-  $enabled               = true,
-  $ensure_package        = 'present',
-  $ipa_domain            = undef,
-  $ipa_password          = undef,
-  $ipa_password_file     = undef,
-  $ipa_principal         = undef,
-  $ipa_server            = undef,
-  $keystone_auth_url     = undef,
-  $manage_service        = true,
-  $nova_password         = undef,
-  $nova_user             = 'nova',
-  $transport_url         = undef,
+  $enabled                   = true,
+  $enable_ipa_client_install = true,
+  $ensure_package            = 'present',
+  $ipa_domain                = undef,
+  $ipa_password              = undef,
+  $ipa_password_file         = undef,
+  $ipa_principal             = undef,
+  $ipa_server                = undef,
+  $keystone_auth_url         = undef,
+  $manage_service            = true,
+  $nova_password             = undef,
+  $nova_user                 = 'nova',
+  $transport_url             = undef,
 ) inherits novajoin::params {
 
-  require ::ipa::client
+  if $enable_ipa_client_install {
+    require ::ipa::client
+  }
 
   if $ipa_principal == undef {
     fail('ipa_principal is required to be set')
