@@ -112,6 +112,12 @@ class novajoin::api (
     source => '/usr/share/novajoin/cloud-config.json',
   }
 
+  # cache location
+  file {'/var/run/nova':
+    ensure => 'directory',
+    owner  => 'nova',
+  }
+
   novajoin_config {
     'DEFAULT/url':                       value => "https://${ipa_server}/ipa/json";
     'DEFAULT/domain':                    value => "${ipa_domain}";
@@ -157,6 +163,8 @@ class novajoin::api (
   Package['python-novajoin'] -> File['/etc/join/join.conf']
   Package['python-novajoin'] -> File['/etc/nova/cloud-config.json'] ~> Service['nova-api']
   File['/etc/join/join.conf'] -> Novajoin_config<||>  ~> Service['nova-api']
+  File['/var/run/nova'] -> Service['novajoin-server']
+  File['/var/run/nova'] -> Service['novajoin-notify']
   Package['python-novajoin'] -> Exec['novajoin-install-script']
   Exec['novajoin-install-script'] ~> Service['novajoin-server']
   Exec['novajoin-install-script'] ~> Service['novajoin-notify']
